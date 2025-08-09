@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Login Required</h2>
+    <form method="post" action="/login">
+        <input type="password" name="token" placeholder="Enter auth token" required>
+        <button type="submit">Login</button>
+    </form>
+{% endblock content %}

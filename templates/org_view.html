@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<nav>
+    <a href="/">Back to dashboard</a>
+</nav>
+
+<header>
+    <h1>{{ title }}</h1>
+</header>
+
+<main>
+    {{ html_content|safe }}
+</main>
+{% endblock content %}

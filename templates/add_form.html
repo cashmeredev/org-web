@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<nav>
+    <a href="/">Back to dashboard</a> |
+    <a href="/org/{{ file_name }}">Back to note</a>
+</nav>
+
+<header>
+    <h1>Add new heading</h1>
+</header>
+
+<main>
+    <blockquote>
+        <strong>File:</strong> {{ file_name }}<br>
+        {% if parent_heading %}
+        <strong>After:</strong> {{ parent_heading }} (Level H{{ parent_level }})
+        {% else %}
+        <strong>Position:</strong> At end of file
+        {% endif %}
+    </blockquote>
+
+    <form method="post" action="/add-heading">
+        <input type="hidden" name="file_name" value="{{ file_name }}">
+        <input type="hidden" name="parent_heading" value="{{ parent_heading }}">
+        <input type="hidden" name="parent_level" value="{{ parent_level }}">
+
+        <label for="new_heading">Title:</label>
+        <input type="text" id="new_heading" name="new_heading" required>
+
+        <label for="new_level">Heading Level:</label>
+        <select id="new_level" name="new_level">
+            <option value="1">H1 (*)</option>
+            <option value="2" selected>H2 (**)</option>
+            <option value="3">H3 (***)</option>
+            <option value="4">H4 (****)</option>
+            <option value="5">H5 (*****)</option>
+            <option value="6">H6 (******)</option>
+        </select>
+
+        <label for="new_content">Content:</label>
+        <textarea id="new_content" name="new_content" rows="10"></textarea>
+
+        <button type="submit">Add Heading</button>
+    </form>
+</main>
+{% endblock content %}

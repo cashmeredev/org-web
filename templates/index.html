@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+    <header>
+        <h1>{{ title }}</h1>
+        <p>Orgmode Web</p>
+    </header>
+
+    <main>
+        <p><em>Found {{ org_files|length }} files</em></p>
+
+        {% for file in org_files %}
+        <article>
+            <h2><a href="/org/{{ file.file_name }}">{{ file.title }}</a></h2>
+            <!-- <small>{{ file.file_name }}</small> -->
+        </article>
+        {% endfor %}
+
+        {% if not org_files %}
+        <h2>Keine Org-Dateien gefunden</h2>
+        <p>No files found</p>
+        {% endif %}
+    </main>
+{% endblock content %}

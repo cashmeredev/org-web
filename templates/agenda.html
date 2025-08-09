@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: "Droid Sans", monospace;
+            margin: 0;
+            padding: 20px;
+            background-color: #fafafa;
+            color: #333;
+            line-height: 1.6;
+            font-size: 16px; /* war 14px */
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px; /* war 24px */
+            color: #333;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #666;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            font-size: 20px; /* war 18px */
+        }
+        .agenda-item {
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #ccc;
+        }
+        .agenda-item.schedule {
+            border-left-color: #5cb85c;
+        }
+        .agenda-item.deadline {
+            border-left-color: #d9534f;
+        }
+        .agenda-item.active {
+            border-left-color: #f0ad4e;
+        }
+        .agenda-item.next {
+            border-left-color: #5bc0de;
+        }
+        .agenda-item.todo {
+            border-left-color: #337ab7;
+        }
+        .agenda-item.wait {
+            border-left-color: #777;
+        }
+        .item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 17px; /* war 15px */
+        }
+        .item-meta {
+            font-size: 15px; /* war 13px */
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .item-file {
+            font-size: 14px; /* war 12px */
+            color: #999;
+        }
+        .item-file a {
+            color: #337ab7;
+            text-decoration: none;
+        }
+        .item-file a:hover {
+            text-decoration: underline;
+        }
+        .todo-keyword {
+            background-color: #337ab7;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px; /* war 11px */
+            margin-right: 5px;
+        }
+        .todo-keyword.active {
+            background-color: #f0ad4e;
+        }
+        .todo-keyword.next {
+            background-color: #5bc0de;
+        }
+        .todo-keyword.wait {
+            background-color: #777;
+        }
+        .priority {
+            color: #d9534f;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .nav {
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: #337ab7;
+            text-decoration: none;
+            font-size: 16px; /* war 14px */
+        }
+        .nav a:hover {
+            text-decoration: underline;
+        }
+        .empty-section {
+            color: #999;
+            font-style: italic;
+            padding: 10px 0;
+            font-size: 16px; /* war 14px */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <a href="/">← Back to Home</a>
+        </div>
+
+        <div class="header">
+            <h1>Agenda for {{ today }}</h1>
+        </div>
+
+        <div class="section">
+            <h2>Scheduled for Today</h2>
+            {% if agenda_data.schedules_today %}
+                {% for item in agenda_data.schedules_today %}
+                <div class="agenda-item schedule">
+                    <div class="item-title">
+                        {% if item.todo_keyword %}
+                            <span class="todo-keyword {{ item.todo_keyword.lower() }}">{{ item.todo_keyword }}</span>
+                        {% endif %}
+                        {% if item.priority %}
+                            <span class="priority">[#{{ item.priority }}]</span>
+                        {% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-meta">
+                        Scheduled: {{ item.scheduled }}
+                        {% if item.deadline %}
+                            | Deadline: {{ item.deadline }}
+                        {% endif %}
+                    </div>
+                    <div class="item-file">
+                        <a href="/org/{{ item.file_name }}">{{ item.file_title or item.file_name }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-section">No items scheduled for today</div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>Deadlines Today</h2>
+            {% if agenda_data.deadlines_today %}
+                {% for item in agenda_data.deadlines_today %}
+                <div class="agenda-item deadline">
+                    <div class="item-title">
+                        {% if item.todo_keyword %}
+                            <span class="todo-keyword {{ item.todo_keyword.lower() }}">{{ item.todo_keyword }}</span>
+                        {% endif %}
+                        {% if item.priority %}
+                            <span class="priority">[#{{ item.priority }}]</span>
+                        {% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-meta">
+                        Deadline: {{ item.deadline }}
+                        {% if item.scheduled %}
+                            | Scheduled: {{ item.scheduled }}
+                        {% endif %}
+                    </div>
+                    <div class="item-file">
+                        <a href="/org/{{ item.file_name }}">{{ item.file_title or item.file_name }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-section">No deadlines for today</div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>ACTIVE</h2>
+            {% if agenda_data.todos.ACTIVE %}
+                {% for item in agenda_data.todos.ACTIVE %}
+                <div class="agenda-item active">
+                    <div class="item-title">
+                        <span class="todo-keyword active">ACTIVE</span>
+                        {% if item.priority %}
+                            <span class="priority">[#{{ item.priority }}]</span>
+                        {% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-file">
+                        <a href="/org/{{ item.file_name }}">{{ item.file_title }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-section">No ACTIVE items</div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>NEXT</h2>
+            {% if agenda_data.todos.NEXT %}
+                {% for item in agenda_data.todos.NEXT %}
+                <div class="agenda-item next">
+                    <div class="item-title">
+                        <span class="todo-keyword next">NEXT</span>
+                        {% if item.priority %}
+                            <span class="priority">[#{{ item.priority }}]</span>
+                        {% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-file">
+                        <a href="/org/{{ item.file_name }}">{{ item.file_title }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-section">No NEXT items</div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>TODO</h2>
+            {% if agenda_data.todos.TODO %}
+                {% for item in agenda_data.todos.TODO %}
+                <div class="agenda-item todo">
+                    <div class="item-title">
+                        <span class="todo-keyword">TODO</span>
+                        {% if item.priority %}
+                            <span class="priority">[#{{ item.priority }}]</span>
+                        {% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-file">
+                        <a href="/org/{{ item.file_name }}">{{ item.file_title }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-section">No TODO items</div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <h2>WAITING</h2>
+            {% if agenda_data.todos.WAIT %}
+                {% for item in agenda_data.todos.WAIT %}
+                <div class="agenda-item wait">
+                    <div class="item-title">
+                        <span class="todo-keyword wait">WAIT</span>
+                        {% if item.priority %}
+                            <span class="priority">[#{{ item.priority }}]</span>
+                        {% endif %}
+                        {{ item.title }}
+                    </div>
+                    <div class="item-file">
+                        <a href="/org/{{ item.file_name }}">{{ item.file_title }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-section">No WAITING items</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

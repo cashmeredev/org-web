@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<nav>
+    <a href="/">Back to dashboard</a> |
+    <a href="/org/{{ file_name }}">Back to note</a>
+</nav>
+
+<header>
+    <h1>Edit heading</h1>
+</header>
+
+<main>
+    <blockquote>
+        <strong>Current:</strong> {{ heading }}<br>
+        <small>Level: H{{ level }} | File: {{ file_name }}</small>
+    </blockquote>
+
+    {% if existing_content %}
+    <details>
+        <summary>Show current entry</summary>
+        <pre>{{ existing_content }}</pre>
+    </details>
+    {% endif %}
+
+    <form method="post" action="/edit-heading">
+        <input type="hidden" name="file_name" value="{{ file_name }}">
+        <input type="hidden" name="heading_level" value="{{ level }}">
+        <input type="hidden" name="old_heading" value="{{ heading }}">
+
+        <label for="new_heading">Title:</label>
+        <input type="text" id="new_heading" name="new_heading" value="{{ heading }}" required>
+
+        <label for="new_content">Content:</label>
+        <textarea id="new_content" name="new_content" rows="10">{{ existing_content }}</textarea>
+
+        <button type="submit">Save</button>
+    </form>
+</main>
+{% endblock content %}
