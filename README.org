@@ -1,0 +1,20 @@
+*** Current state on org-web
+:note:
+I am aware that there is already a project called [[https://org-web.org][org-web]]. However, it has not been actively developed for years. If anyone has a better name, feel free to suggest it to me :).
+:end:
+The following features are currently supported.
+- Get the status of the current agenda at a certain interval via XMPP
+It is possible to enable and disable this feature.
+- Receive reminders as notifications for schedules.
+Inspired by Thunderbird, where you receive a reminder 15 minutes before an appointment in your calendar.
+- Set an active time when you want to receive notifications
+e.g. 08:00-22:00
+- Call up the current agenda via Org Web
+- Call up all existing Org files.
+- Edit and add headings/subheadings
+- First class support for git (automatic pull/push)
+- First class support for denote
+- Focus on HTML/CSS
+- Authentication system with a token
+**** Will more features follow?
+Yes, definitely. The whole project is very opinionated based on my personal workflow. However, I would like to expand the whole project in the future. For example, the ability to create a wiki or publish Org Notes as a kind of blog post, and much more.
