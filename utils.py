@@ -289,3 +289,176 @@ def format_agenda_date(date_obj):
     if isinstance(date_obj, date):
         return date_obj.strftime("%Y-%m-%d")
     return str(date_obj)
+
+
+def parse_org_agenda_items_task_only(
+    directory: str = "~/denote",
+) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Parse org agenda items but only include TODOs from files with 'task' filetag.
+    Denote filetags are indicated by double underscores in the filename.
+    """
+    from pathlib import Path
+
+    path = Path(directory).expanduser()
+    org_files = list(path.glob("*.org"))
+
+    agenda_items = {
+        "schedules_today": [],
+        "deadlines_today": [],
+        "todos": {"ACTIVE": [], "NEXT": [], "TODO": [], "WAIT": []},
+    }
+
+    today = date.today()
+
+
+    def has_task_filetag(filename: str) -> bool:
+        """Check if filename contains 'task' as a denote filetag (indicated by __)"""
+        # Denote filetags are separated by double underscores
+        parts = filename.split("__")
+        # Check if 'task' appears in any filetag
+        for part in parts[1:]:  # Skip the first part (ID and title)
+            # Remove .org extension from last part
+            clean_part = part.replace(".org", "").lower()
+            # Split by underscores to handle compound tags like 'blackberry_task'
+            tag_components = clean_part.split("_")
+            if "task" in tag_components:
+                return True
+        return False
+
+    for file_path in org_files:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # Check if this file has the 'task' filetag
+            is_task_file = has_task_filetag(file_path.name)
+
+            root = orgparse.load(str(file_path))
+            file_title = extract_title_from_content(content)
+
+            if not file_title:
+                file_title = file_path.stem
+
+            processed_items = set()
+
+            def parse_timestamps_in_content(heading_text, content_after_heading):
+                scheduled = None
+                deadline = None
+
+                scheduled_match = re.search(
+                    r"SCHEDULED:\s*<([^>]+)>", content_after_heading
+                )
+                if scheduled_match:
+                    try:
+                        date_str = scheduled_match.group(1)
+                        date_part = date_str.split()[0]
+                        scheduled = datetime.strptime(date_part, "%Y-%m-%d").date()
+                    except:
+                        pass
+
+                deadline_match = re.search(
+                    r"DEADLINE:\s*<([^>]+)>", content_after_heading
+                )
+                if deadline_match:
+                    try:
+                        date_str = deadline_match.group(1)
+                        date_part = date_str.split()[0]
+                        deadline = datetime.strptime(date_part, "%Y-%m-%d").date()
+                    except:
+                        pass
+
+                return scheduled, deadline
+
+            content_sections = {}
+            lines = content.split("\n")
+            current_heading = None
+            current_content = []
+
+            for line in lines:
+                heading_match = re.match(r"^(\*+)\s+(.+)", line)
+                if heading_match:
+                    if current_heading:
+                        content_sections[current_heading] = "\n".join(current_content)
+
+                    current_heading = heading_match.group(2).strip()
+                    current_content = []
+                else:
+                    current_content.append(line)
+
+            if current_heading:
+                content_sections[current_heading] = "\n".join(current_content)
+
+            def walk_nodes(node):
+                if hasattr(node, "heading") and node.heading:
+                    todo_keyword = getattr(node, "todo", None)
+                    original_heading = node.heading
+
+                    if not todo_keyword and node.heading:
+                        todo_match = re.match(
+                            r"^(ACTIVE|NEXT|TODO|WAIT|DONE)\s+", node.heading
+                        )
+                        if todo_match:
+                            todo_keyword = todo_match.group(1)
+                            original_heading = node.heading[
+                                len(todo_match.group(0)) :
+                            ].strip()
+
+                    heading_content = content_sections.get(
+                        original_heading, content_sections.get(node.heading, "")
+                    )
+                    scheduled, deadline = parse_timestamps_in_content(
+                        original_heading, heading_content
+                    )
+
+                    item_data = {
+                        "title": original_heading,
+                        "file_name": file_path.name,
+                        "file_title": file_title,
+                        "todo_keyword": todo_keyword,
+                        "tags": getattr(node, "tags", []),
+                        "priority": getattr(node, "priority", None),
+                        "scheduled": scheduled,
+                        "deadline": deadline,
+                        "is_task_file": is_task_file,
+                    }
+
+                    # Always include scheduled and deadline items regardless of filetag
+                    if scheduled and scheduled == today:
+                        item_id = f"schedule:{file_path.name}:{original_heading}"
+                        if item_id not in processed_items:
+                            processed_items.add(item_id)
+                            agenda_items["schedules_today"].append(item_data.copy())
+
+                    if deadline and deadline == today:
+                        item_id = f"deadline:{file_path.name}:{original_heading}"
+                        if item_id not in processed_items:
+                            processed_items.add(item_id)
+                            agenda_items["deadlines_today"].append(item_data.copy())
+
+                    # Only include TODO items if the file has 'task' filetag
+                    if (
+                        todo_keyword
+                        and todo_keyword in ["ACTIVE", "NEXT", "TODO", "WAIT"]
+                        and is_task_file
+                    ):
+                        item_id = (
+                            f"todo:{file_path.name}:{todo_keyword}:{original_heading}"
+                        )
+                        if item_id not in processed_items:
+                            processed_items.add(item_id)
+                            agenda_items["todos"][todo_keyword].append(item_data.copy())
+
+                if hasattr(node, "children"):
+                    for child in node.children:
+                        walk_nodes(child)
+
+            if hasattr(root, "children"):
+                for child in root.children:
+                    walk_nodes(child)
+
+        except Exception as e:
+            print(f"Error parsing {file_path}: {e}")
+            continue
+
+    return agenda_items

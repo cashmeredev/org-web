@@ -19,6 +19,7 @@ from utils import (
     inject_edit_buttons,
     parse_org_agenda_items,
     update_heading_in_content,
+    parse_org_agenda_items_task_only,
 )
 import xmpp_bot
 import uvicorn
@@ -393,7 +394,7 @@ async def agenda_view(
     if isinstance(auth, RedirectResponse):
         return auth
     try:
-        agenda_data = parse_org_agenda_items()
+        agenda_data = parse_org_agenda_items_task_only()
 
         return templates.TemplateResponse(
             "agenda.html",
@@ -409,16 +410,13 @@ async def agenda_view(
         return HTMLResponse(f"Error loading agenda: {e}", status_code=500)
 
 
-
 async def async_main():
-    await asyncio.gather(
-        run_uvicorn(),
-        run_xmpp(),
-        periodic_git_pull()
-    )
+    await asyncio.gather(run_uvicorn(), run_xmpp(), periodic_git_pull())
+
 
 def main():
     asyncio.run(async_main())
+
 
 if __name__ == "__main__":
     main()
