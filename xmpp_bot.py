@@ -7,7 +7,7 @@ from typing import Any, Dict, Set
 
 from slixmpp import ClientXMPP
 
-from utils import parse_org_agenda_items
+from utils import parse_org_agenda_items, parse_org_agenda_items_task_only
 
 
 class CommandBot(ClientXMPP):
@@ -177,7 +177,7 @@ class CommandBot(ClientXMPP):
             await asyncio.sleep(60)
 
             # Get current agenda
-            agenda = parse_org_agenda_items()
+            agenda = parse_org_agenda_items_task_only()
             agenda_text = self.format_agenda(agenda)
 
             # Send test notification
@@ -191,7 +191,7 @@ class CommandBot(ClientXMPP):
     def cmd_agenda(self, args):
         """Agenda Command"""
         try:
-            agenda = parse_org_agenda_items()
+            agenda = parse_org_agenda_items_task_only()
             return self.format_agenda(agenda)
         except Exception as e:
             return f"Error loading agenda: {e}"
@@ -342,7 +342,7 @@ class CommandBot(ClientXMPP):
                         >= self.agenda_interval * 3600
                     ):
 
-                        agenda = parse_org_agenda_items()
+                        agenda = parse_org_agenda_items_task_only()
                         agenda_text = self.format_agenda(agenda)
 
                         # Send to all subscribers
@@ -363,7 +363,7 @@ class CommandBot(ClientXMPP):
         while True:
             try:
                 if self.is_notification_time():
-                    agenda = parse_org_agenda_items()
+                    agenda = parse_org_agenda_items_task_only()
                     now = datetime.now()
 
                     # Check schedules for notifications
